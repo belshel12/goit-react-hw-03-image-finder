@@ -1,18 +1,20 @@
-import { Dna } from 'react-loader-spinner';
+import { ColorRing } from 'react-loader-spinner';
+import { Wrapper } from './Loader.styled';
 
 const Loader = () => {
   return (
-    <span>
-      <Dna
+    <Wrapper>
+      <ColorRing
         visible={true}
-        height="80"
-        width="80"
-        ariaLabel="dna-loading"
+        height="180"
+        width="180"
+        ariaLabel="blocks-loading"
         wrapperStyle={{}}
-        wrapperClass="dna-wrapper"
+        wrapperClass="blocks-wrapper"
+        colors={['#e15b64', '#f47e60', '#f8b26a', '#abbd81', '#849b87']}
       />
-    </span>
+    </Wrapper>
   );
 };
 
-export default Loader ;
+export default Loader;

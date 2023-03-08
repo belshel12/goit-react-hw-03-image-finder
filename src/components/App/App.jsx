@@ -4,7 +4,6 @@ import { ToastContainer } from 'react-toastify';
 import Searchbar from 'components/Searchbar';
 import ImageGallery from 'components/ImageGallery';
 
-
 export class App extends Component {
   state = {
     searchText: '',
@@ -15,7 +14,7 @@ export class App extends Component {
   };
 
   render() {
-    const { searchText, page } = this.state;
+    const { searchText } = this.state;
 
     return (
       <Layout>

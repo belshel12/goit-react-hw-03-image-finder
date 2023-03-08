@@ -1,6 +1,7 @@
 import { Component } from 'react';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import PropTypes from 'prop-types';
 import { getApi } from '../../services/getApi';
 import { GalleryList } from './ImageGallery.styled';
 import Loader from 'components/Loader';
@@ -13,11 +14,12 @@ class ImageGallery extends Component {
     value: '',
     loading: false,
     page: 1,
+    totalImages: 0,
   };
 
   async componentDidUpdate(prevProps, prevState) {
     const { query } = this.props;
-    const { images, value, page } = this.state;
+    const { value, page } = this.state;
 
     if (query !== prevProps.query) {
       this.setState({ value: query });
@@ -34,7 +36,6 @@ class ImageGallery extends Component {
       (query !== prevProps.query && page === 1) ||
       (query === prevProps.query && page !== prevState.page)
     ) {
-      // this.setState({ images: [], loading: true });
       try {
         this.setState({ loading: true });
 
@@ -42,6 +43,7 @@ class ImageGallery extends Component {
 
         this.setState({
           loading: false,
+          totalImages: result.totalHits,
         });
 
         if (result.hits.length) {
@@ -52,22 +54,22 @@ class ImageGallery extends Component {
           this.setState({ images: [], page: 1 });
         }
       } catch (error) {
-        return toast(error.message);
+        toast(error.message);
+        this.setState({ images: [], page: 1, loading: false });
+        return;
       }
     }
   }
 
   handleLoad = () => {
-    this.setState({ loading: true });
     return this.setState(prevState => ({ page: prevState.page + 1 }));
   };
 
   render() {
-    console.log(this.state.images);
-    const { images, loading } = this.state;
+    const { images, loading, totalImages } = this.state;
 
     return (
-      <div>
+      <>
         {loading && <Loader />}
 
         <GalleryList>
@@ -84,10 +86,17 @@ class ImageGallery extends Component {
           })}
         </GalleryList>
 
-        {!loading && <LoadButton onLoad={this.handleLoad} />}
-      </div>
+        {images.length > 0 && images.length < totalImages && (
+          <LoadButton onLoad={this.handleLoad} />
+        )}
+      </>
     );
   }
 }
+
+ImageGallery.propTypes = {
+  query: PropTypes.string.isRequired,
+
+};
 
 export default ImageGallery;
