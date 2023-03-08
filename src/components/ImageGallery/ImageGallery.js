@@ -1,77 +1,93 @@
 import { Component } from 'react';
-import { getApi } from './getApi';
-import { ImageGalleryItem } from './ImageGalleryItem';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { getApi } from '../../services/getApi';
 import { GalleryList } from './ImageGallery.styled';
 import Loader from 'components/Loader';
-import Modal from 'components/Modal';
+import ImageGalleryItem from 'components/ImageGalleryItem';
+import LoadButton from 'components/LoadButton';
 
 class ImageGallery extends Component {
   state = {
     images: [],
-    error: '',
+    value: '',
     loading: false,
-    showModal: false,
+    page: 1,
   };
 
-  componentDidUpdate(prevProps, prevState) {
-    if (
-      prevProps.value !== this.props.value ||
-      prevProps.page !== this.props.page
-    ) {
-      this.setState({ loading: true });
+  async componentDidUpdate(prevProps, prevState) {
+    const { query } = this.props;
+    const { images, value, page } = this.state;
 
-      getApi(this.props.value.trim(), this.props.page)
-        .then(images => {
-          this.setState({
-            images: [...this.state.images, ...images.hits],
-          });
-        })
-        .catch(error => {
-          this.setState({ error });
-        })
-        .finally(() => {
-          this.setState({ loading: false });
+    if (query !== prevProps.query) {
+      this.setState({ value: query });
+    }
+
+    if (value !== prevState.value) {
+      this.setState({
+        images: [],
+        page: 1,
+      });
+    }
+
+    if (
+      (query !== prevProps.query && page === 1) ||
+      (query === prevProps.query && page !== prevState.page)
+    ) {
+      // this.setState({ images: [], loading: true });
+      try {
+        this.setState({ loading: true });
+
+        const result = await getApi(query, page);
+
+        this.setState({
+          loading: false,
         });
+
+        if (result.hits.length) {
+          this.setState(prevState => {
+            return { images: [...prevState.images, ...result.hits] };
+          });
+        } else {
+          this.setState({ images: [], page: 1 });
+        }
+      } catch (error) {
+        return toast(error.message);
+      }
     }
   }
 
-  toggleModal = () => {
-    this.setState(({ showModal }) => ({
-      showModal: !showModal,
-    }));
+  handleLoad = () => {
+    this.setState({ loading: true });
+    return this.setState(prevState => ({ page: prevState.page + 1 }));
   };
 
   render() {
-    const { images, error, loading, showModal } = this.state;
-    console.log(images);
+    console.log(this.state.images);
+    const { images, loading } = this.state;
 
     return (
       <div>
-        {showModal && <Modal onClose={this.toggleModal}></Modal>}
-        {error && <h2>{error}</h2>}
         {loading && <Loader />}
-        {images && (
-          <GalleryList>
-            <ImageGalleryItem images={images} onClick={this.toggleModal} />
-          </GalleryList>
-        )}
+
+        <GalleryList>
+          {images.map(item => {
+            return (
+              <li key={item.id}>
+                <ImageGalleryItem
+                  largeUrl={item.largeImageURL}
+                  webUrl={item.webformatURL}
+                  alt={item.tags}
+                />
+              </li>
+            );
+          })}
+        </GalleryList>
+
+        {!loading && <LoadButton onLoad={this.handleLoad} />}
       </div>
     );
   }
 }
 
 export default ImageGallery;
-
-/* if (status === 'pending') return <Loader />;
-
-    if (status === 'resolved')
-      return (
-        <div>
-          {showModal && <Modal />}
-          <GalleryList>
-            <ImageGalleryItem images={images} />
-          </GalleryList>
-        </div>
-      );
-
-    if (status === 'rejected') return <h2>{error}</h2>;*/
